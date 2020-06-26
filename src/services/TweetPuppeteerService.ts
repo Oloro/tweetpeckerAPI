@@ -9,8 +9,8 @@ export default abstract class TweetPuppeteerService {
     count: number
   ): Promise<Post[]> {
     // these are Chrome DevTools Protocol objects, no reliable source of types data so "any"
-    let requests: any[] = [];
-    let extraInfo: any[] = [];
+    const requests: any[] = [];
+    const extraInfo: any[] = [];
     const browser = await Puppeteer.launch({
       headless: true,
       defaultViewport: null,
@@ -21,12 +21,10 @@ export default abstract class TweetPuppeteerService {
     await this.enableCDPDomains(client);
 
     client.on('Network.requestWillBeSentExtraInfo', (request) => {
-      if (extraInfo === undefined) extraInfo = [];
       extraInfo.push(request);
     });
 
     client.on('Fetch.requestPaused', async (request) => {
-      if (requests === undefined) requests = [];
       requests.push(request);
       await client.send('Fetch.continueRequest', {
         requestId: request.requestId,
@@ -108,14 +106,12 @@ export default abstract class TweetPuppeteerService {
     // - replace cookies with the correct ones
     requestHeaders.cookie = requestExtraInfoCookies.headers.cookie;
     // - clean the headers keys
-    requestHeaders['method'] = requestHeaders[':method'];
-    requestHeaders['authority'] = requestHeaders[':authority'];
-    requestHeaders['scheme'] = requestHeaders[':scheme'];
-    requestHeaders['path'] = requestHeaders[':path'];
-    delete requestHeaders[':method'];
-    delete requestHeaders[':authority'];
-    delete requestHeaders[':scheme'];
-    delete requestHeaders[':path'];
+    for (const key in requestHeaders) {
+      if (/^:.*$/.test(key)) {
+        requestHeaders[key.slice(1)] = requestHeaders[key];
+        delete requestHeaders[key];
+      }
+    }
     // - replace the default count=20 for custom count
     requestHeaders.path = requestHeaders.path.replace(
       /&count=20&/,
