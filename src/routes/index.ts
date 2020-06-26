@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import TweetPuppeteer from '../services/TweetPuppeteer';
+import TweetPuppeteer from '../services/TweetPuppeteerService';
 const router = Router();
 
 router.get('/api/tweet/', async (req, res) => {

@@ -1,18 +1,14 @@
 import Puppeteer from 'puppeteer';
 import Bent from 'bent';
-import { request } from 'express';
+import Post from '../models/Post';
+import _values from 'lodash.values';
 
-class Post {
-  favourite_count = 0;
-  full_text = '';
-  quote_count = 0;
-  reply_count = 0;
-  retweet_count = 0;
-}
-
-export default {
-  async getTweetData(url: string, count: number): Promise<any> {
-    let posts: Post[];
+export default abstract class TweetPuppeteerService {
+  public static async getTweetData(
+    url: string,
+    count: number
+  ): Promise<Post[]> {
+    // these are Chrome DevTools Protocol objects, no reliable source of types data so "any"
     let requests: any[] = [];
     let extraInfo: any[] = [];
     const browser = await Puppeteer.launch({
@@ -22,22 +18,11 @@ export default {
     });
     const [page] = await browser.pages();
     const client = await page.target().createCDPSession();
-    await client.send('Network.enable');
+    await this.enableCDPDomains(client);
 
     client.on('Network.requestWillBeSentExtraInfo', (request) => {
       if (extraInfo === undefined) extraInfo = [];
       extraInfo.push(request);
-    });
-
-    await client.send('Fetch.enable', {
-      patterns: [
-        {
-          urlPattern:
-            '*https://api.twitter.com/*/timeline/conversation/*.json*',
-          resourceType: 'XHR',
-          requestStage: 'Request',
-        },
-      ],
     });
 
     client.on('Fetch.requestPaused', async (request) => {
@@ -52,6 +37,50 @@ export default {
     await page.waitForSelector('[role=region]');
     browser.close();
 
+    const requestHeaders = this.buildRequestHeaders(requests, extraInfo, count);
+    const bentRequest = Bent('https://api.twitter.com', 'string');
+    const res = JSON.parse(
+      await bentRequest(requestHeaders.path, undefined, requestHeaders)
+    );
+    return new Promise<any>((resolve) => {
+      resolve(
+        _values(res.globalObjects.tweets).map((v) => {
+          return new Post(
+            v.id_str,
+            v.full_text,
+            v.user_id_str,
+            v.retweet_count,
+            v.favourite_count,
+            v.reply_count,
+            v.quote_count
+          );
+        })
+      );
+    });
+  }
+
+  private static async enableCDPDomains(
+    client: Puppeteer.CDPSession
+  ): Promise<void> {
+    await client.send('Network.enable');
+    await client.send('Fetch.enable', {
+      patterns: [
+        {
+          urlPattern:
+            '*https://api.twitter.com/*/timeline/conversation/*.json*',
+          resourceType: 'XHR',
+          requestStage: 'Request',
+        },
+      ],
+    });
+    return Promise.resolve();
+  }
+
+  private static buildRequestHeaders(
+    requests: any[],
+    extraInfo: any[],
+    repliesCount: number
+  ): Record<string, string> {
     // Merge request data and extraInfo and send it to get response
     //  - Pick the correct request (the one with dot in networkId)
     const correctRequest = requests
@@ -72,7 +101,7 @@ export default {
       })
       .pop();
     // - merge headers
-    const requestHeaders: any = {
+    const requestHeaders: Record<string, string> = {
       ...correctRequest.headers,
       ...requestExtraInfo.headers,
     };
@@ -87,19 +116,11 @@ export default {
     delete requestHeaders[':authority'];
     delete requestHeaders[':scheme'];
     delete requestHeaders[':path'];
-
-    const test = Bent('https://api.twitter.com', 'json');
-    const res = await test(requestHeaders.path, undefined, requestHeaders);
-    console.log(res);
-
-    return new Promise<any>((resolve) => {
-      resolve(5);
-    });
-  },
-
-  isValidDataUrl(url: string): boolean {
-    return /^https:\/\/api.twitter.com\/\d+\/timeline\/conversation\/\d+.json/.test(
-      url
+    // - replace the default count=20 for custom count
+    requestHeaders.path = requestHeaders.path.replace(
+      /&count=20&/,
+      `&count=${repliesCount}&`
     );
-  },
-};
+    return requestHeaders;
+  }
+}
