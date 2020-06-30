@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "atob": "^2.1.2",
     "bent": "^7.3.6",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
@@ -19,6 +20,7 @@
     "puppeteer": "^4.0.0"
   },
   "devDependencies": {
+    "@types/atob": "^2.1.2",
     "@types/bent": "^7.0.2",
     "@types/cors": "^2.8.6",
     "@types/dotenv": "^8.2.0",

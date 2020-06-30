@@ -2,12 +2,13 @@ import Puppeteer from 'puppeteer';
 import Bent from 'bent';
 import Post from '../models/Post';
 import _values from 'lodash.values';
+import atob from 'atob';
 
 export default abstract class TweetPuppeteerService {
   public static async getTweetData(
     url: string,
     count: number
-  ): Promise<Post[]> {
+  ): Promise<{ message: string; posts: Post[] }> {
     // these are Chrome DevTools Protocol objects, no reliable source of types data so "any"
     const requests: any[] = [];
     const extraInfo: any[] = [];
@@ -25,6 +26,16 @@ export default abstract class TweetPuppeteerService {
     });
 
     client.on('Fetch.requestPaused', async (request) => {
+      const bodyString = atob(
+        ((await client.send('Fetch.getResponseBody', {
+          requestId: request.requestId,
+        })) as { body: string; base64Encoded: boolean }).body
+      );
+      try {
+        request.body = JSON.parse(bodyString);
+      } catch (error) {
+        request.body = {};
+      }
       requests.push(request);
       await client.send('Fetch.continueRequest', {
         requestId: request.requestId,
@@ -32,28 +43,41 @@ export default abstract class TweetPuppeteerService {
     });
 
     await page.goto(url);
-    await page.waitForSelector('[role=region]');
+    await page.waitForRequest((req) => {
+      return /init.json/.test(req.url());
+    });
     browser.close();
 
     const requestHeaders = this.buildRequestHeaders(requests, extraInfo, count);
-    const bentRequest = Bent('https://api.twitter.com', 'string');
-    const res = JSON.parse(
-      await bentRequest(requestHeaders.path, undefined, requestHeaders)
-    );
-    return new Promise<any>((resolve) => {
-      resolve(
-        _values(res.globalObjects.tweets).map((v) => {
-          return new Post(
-            v.id_str,
-            v.full_text,
-            v.user_id_str,
-            v.retweet_count,
-            v.favourite_count,
-            v.reply_count,
-            v.quote_count
-          );
-        })
+    let message: string;
+    let posts: Post[];
+    if (!requestHeaders) {
+      message = 'no thread found under provided url.';
+      posts = [];
+    } else {
+      const bentRequest = Bent('https://api.twitter.com', 'string');
+      const res = JSON.parse(
+        await bentRequest(requestHeaders.path, undefined, requestHeaders)
       );
+      message = 'ok';
+      posts = _values(res.globalObjects.tweets).map((v) => {
+        return new Post(
+          v.id_str,
+          v.full_text,
+          v.user_id_str,
+          v.retweet_count,
+          v.favourite_count,
+          v.reply_count,
+          v.quote_count
+        );
+      });
+    }
+
+    return new Promise<{ message: string; posts: Post[] }>((resolve) => {
+      resolve({
+        message: message,
+        posts: posts,
+      });
     });
   }
 
@@ -67,18 +91,19 @@ export default abstract class TweetPuppeteerService {
           urlPattern:
             '*https://api.twitter.com/*/timeline/conversation/*.json*',
           resourceType: 'XHR',
-          requestStage: 'Request',
+          requestStage: 'Response',
         },
       ],
     });
     return Promise.resolve();
   }
 
+  // TODO: This should probably be refactored, getting too long.
   private static buildRequestHeaders(
     requests: any[],
     extraInfo: any[],
     repliesCount: number
-  ): Record<string, string> {
+  ): Record<string, string> | false {
     // Merge request data and extraInfo and send it to get response
     //  - Pick the correct request (the one with dot in networkId)
     const correctRequest = requests
@@ -86,6 +111,7 @@ export default abstract class TweetPuppeteerService {
         return /\./.test(value.networkId);
       })
       .pop();
+    if (correctRequest.body.errors) return false;
     // - pick the extraInfo that is associated with correct request
     const requestExtraInfo = extraInfo
       .filter((value) => {
