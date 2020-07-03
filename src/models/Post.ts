@@ -1,4 +1,6 @@
 export default class Post {
+  private conversationIdStr = '';
+  private createdAt = '';
   private idStr = '';
   private fullText = '';
   private userIdStr = '';
@@ -8,6 +10,8 @@ export default class Post {
   private quoteCount = 0;
 
   constructor(
+    conversationIdStr: string,
+    createdAt: string,
     idStr: string,
     fullText: string,
     userIdStr: string,
@@ -16,6 +20,8 @@ export default class Post {
     replyCount: number,
     quoteCount: number
   ) {
+    this.conversationIdStr = conversationIdStr;
+    this.createdAt = createdAt;
     this.idStr = idStr;
     this.fullText = fullText;
     this.userIdStr = userIdStr;

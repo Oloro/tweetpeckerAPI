@@ -10,15 +10,17 @@ router.get('/api/tweet/', async (req, res) => {
   try {
     if (
       req.query.url &&
-      /^https:\/\/twitter.com\/.+\/status\/\d+$/.test(req.query.url.toString())
+      /^(?:https?:\/\/)*twitter.com\/\w+\/status\/\d+$/.test(
+        req.query.url.toString()
+      )
     ) {
       url = req.query.url.toString();
-    } else throw Error('invalid url.');
+    } else throw Error('Provided link is invalid.');
     if (req.query.count && parseInt(req.query.count.toString()) * -1 < 0) {
       count = parseInt(req.query.count.toString());
-    } else throw Error('invalid count.');
+    } else throw Error('Provided post count is invalid.');
     replies = await TweetPuppeteer.getTweetData(url, count);
-    !replies.posts.length
+    replies.posts.length
       ? res.status(200).json(replies)
       : res.status(404).json(replies);
   } catch (error) {

@@ -1,6 +1,7 @@
 import Puppeteer from 'puppeteer';
 import Bent from 'bent';
 import Post from '../models/Post';
+import User from '../models/User';
 import _values from 'lodash.values';
 import atob from 'atob';
 
@@ -8,7 +9,7 @@ export default abstract class TweetPuppeteerService {
   public static async getTweetData(
     url: string,
     count: number
-  ): Promise<{ message: string; posts: Post[] }> {
+  ): Promise<{ message: string; data: { posts: Post[]; users: User[] } }> {
     // these are Chrome DevTools Protocol objects, no reliable source of types data so "any"
     const requests: any[] = [];
     const extraInfo: any[] = [];
@@ -51,9 +52,11 @@ export default abstract class TweetPuppeteerService {
     const requestHeaders = this.buildRequestHeaders(requests, extraInfo, count);
     let message: string;
     let posts: Post[];
+    let users: User[];
     if (!requestHeaders) {
-      message = 'no thread found under provided url.';
+      message = 'No thread found under provided link.';
       posts = [];
+      users = [];
     } else {
       const bentRequest = Bent('https://api.twitter.com', 'string');
       const res = JSON.parse(
@@ -62,6 +65,8 @@ export default abstract class TweetPuppeteerService {
       message = 'ok';
       posts = _values(res.globalObjects.tweets).map((v) => {
         return new Post(
+          v.conversation_id_str,
+          v.created_at,
           v.id_str,
           v.full_text,
           v.user_id_str,
@@ -71,12 +76,30 @@ export default abstract class TweetPuppeteerService {
           v.quote_count
         );
       });
+      users = _values(res.globalObjects.users).map((v) => {
+        return new User(
+          v.id_str,
+          v.name,
+          v.screen_name,
+          v.profile_image_url_https,
+          v.description,
+          v.favourites_count,
+          v.followers_count,
+          v.friends_count
+        );
+      });
     }
 
-    return new Promise<{ message: string; posts: Post[] }>((resolve) => {
+    return new Promise<{
+      message: string;
+      data: { posts: Post[]; users: User[] };
+    }>((resolve) => {
       resolve({
         message: message,
-        posts: posts,
+        data: {
+          posts: posts,
+          users: users,
+        },
       });
     });
   }
