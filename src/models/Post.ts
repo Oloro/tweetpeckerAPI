@@ -5,7 +5,7 @@ export default class Post {
   private fullText = '';
   private userIdStr = '';
   private retweetCount = 0;
-  private favouriteCount = 0;
+  private favoriteCount = 0;
   private replyCount = 0;
   private quoteCount = 0;
 
@@ -16,7 +16,7 @@ export default class Post {
     fullText: string,
     userIdStr: string,
     retweetCount: number,
-    favouriteCount: number,
+    favoriteCount: number,
     replyCount: number,
     quoteCount: number
   ) {
@@ -26,7 +26,7 @@ export default class Post {
     this.fullText = fullText;
     this.userIdStr = userIdStr;
     this.retweetCount = retweetCount;
-    this.favouriteCount = favouriteCount;
+    this.favoriteCount = favoriteCount;
     this.replyCount = replyCount;
     this.quoteCount = quoteCount;
   }

@@ -1,16 +1,17 @@
 import { Router } from 'express';
 import TweetPuppeteer from '../services/TweetPuppeteerService';
 import Post from '../models/Post';
+import User from '../models/User';
 const router = Router();
 
 router.get('/api/tweet/', async (req, res) => {
   let url: string;
   let count: number;
-  let replies: { message: string; posts: Post[] };
+  let replies: { message: string; data: { posts: Post[]; users: User[] } };
   try {
     if (
       req.query.url &&
-      /^(?:https?:\/\/)*twitter.com\/\w+\/status\/\d+$/.test(
+      /^(?:https?:\/\/)*(?:mobile.)*twitter.com\/\w+\/status\/\d+$/.test(
         req.query.url.toString()
       )
     ) {
@@ -20,7 +21,7 @@ router.get('/api/tweet/', async (req, res) => {
       count = parseInt(req.query.count.toString());
     } else throw Error('Provided post count is invalid.');
     replies = await TweetPuppeteer.getTweetData(url, count);
-    replies.posts.length
+    replies.data.posts.length
       ? res.status(200).json(replies)
       : res.status(404).json(replies);
   } catch (error) {

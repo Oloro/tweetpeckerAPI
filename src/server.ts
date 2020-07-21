@@ -18,7 +18,7 @@ app.use(cors());
 app.use(router);
 
 if (process.env.HOST && process.env.PORT) {
-  app.listen(parseInt(process.env.PORT), process.env.HOST, () => {
+  app.listen(parseInt(process.env.PORT), () => {
     console.log(`Listening on ${process.env.HOST}:${process.env.PORT}...`);
   });
 } else {

@@ -71,7 +71,7 @@ export default abstract class TweetPuppeteerService {
           v.full_text,
           v.user_id_str,
           v.retweet_count,
-          v.favourite_count,
+          v.favorite_count,
           v.reply_count,
           v.quote_count
         );
@@ -89,7 +89,6 @@ export default abstract class TweetPuppeteerService {
         );
       });
     }
-
     return new Promise<{
       message: string;
       data: { posts: Post[]; users: User[] };
