@@ -18,7 +18,8 @@
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "lodash.values": "^4.3.0",
-    "puppeteer": "^4.0.0"
+    "puppeteer": "^4.0.0",
+    "typescript": "^3.9.5"
   },
   "devDependencies": {
     "@types/atob": "^2.1.2",
@@ -35,7 +36,6 @@
     "eslint-plugin-prettier": "^3.1.4",
     "jest": "^26.1.0",
     "nodemon": "^2.0.4",
-    "prettier": "^2.0.5",
-    "typescript": "^3.9.5"
+    "prettier": "^2.0.5"
   }
 }
