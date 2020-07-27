@@ -16,5 +16,6 @@ artifacts:
   files:
     - package.json
     - package.lock.json
+    - .npmrc
     - 'dist/**/*'
     - README.md
