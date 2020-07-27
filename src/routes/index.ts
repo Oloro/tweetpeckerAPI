@@ -4,7 +4,7 @@ import Post from '../models/Post';
 import User from '../models/User';
 const router = Router();
 
-router.get('/api/tweet/', async (req, res) => {
+router.get('/tweet', async (req, res) => {
   let url: string;
   let count: number;
   let replies: { message: string; data: { posts: Post[]; users: User[] } };
