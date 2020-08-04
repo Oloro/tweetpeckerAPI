@@ -4,6 +4,25 @@ import Post from '../models/Post';
 import User from '../models/User';
 import _values from 'lodash.values';
 import atob from 'atob';
+import { createLogger, format, transports } from 'winston';
+import dailyRotateFile from 'winston-daily-rotate-file';
+
+const logger = createLogger({
+  level: 'info',
+  format: format.combine(
+    format.timestamp({
+      format: 'YYYY-MM-DD HH:mm:ss',
+    }),
+    format.simple()
+  ),
+  transports: [
+    new dailyRotateFile({
+      filename: 'application-%DATE%.log',
+      datePattern: 'YYYY-MM-DD-HH',
+      maxSize: '10m',
+    }),
+  ],
+});
 
 export default abstract class TweetPuppeteerService {
   public static async getTweetData(
@@ -11,6 +30,7 @@ export default abstract class TweetPuppeteerService {
     count: number
   ): Promise<{ message: string; data: { posts: Post[]; users: User[] } }> {
     // these are Chrome DevTools Protocol objects, no reliable source of types data so "any"
+    logger.info('getTweetData called.');
     const requests: any[] = [];
     const extraInfo: any[] = [];
     const browser = await Puppeteer.launch({
@@ -18,6 +38,7 @@ export default abstract class TweetPuppeteerService {
       defaultViewport: null,
       devtools: true,
     });
+    logger.info('chrome launched.');
     const [page] = await browser.pages();
     const client = await page.target().createCDPSession();
     await this.enableCDPDomains(client);
@@ -47,6 +68,7 @@ export default abstract class TweetPuppeteerService {
     await page.waitForRequest((req) => {
       return /init.json/.test(req.url());
     });
+    logger.info('init.json aquired, closing chrome.');
     browser.close();
 
     const requestHeaders = this.buildRequestHeaders(requests, extraInfo, count);
@@ -133,6 +155,7 @@ export default abstract class TweetPuppeteerService {
         return /\./.test(value.networkId);
       })
       .pop();
+    logger.info(`correct requests - ${JSON.stringify(correctRequest)}`);
     if (correctRequest.body.errors) return false;
     // - pick the extraInfo that is associated with correct request
     const requestExtraInfo = extraInfo
