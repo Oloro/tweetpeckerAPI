@@ -157,7 +157,11 @@ export default abstract class TweetPuppeteerService {
       .pop();
     logger.info(`correct requests - ${JSON.stringify(correctRequest)}`);
     if (correctRequest.body.errors) {
-      logger.info('correct request has errors in body - returns false');
+      logger.info(
+        `correct request has errors in body - returns false - ${JSON.stringify(
+          correctRequest.body.errors
+        )}`
+      );
       return false;
     }
     // - pick the extraInfo that is associated with correct request
