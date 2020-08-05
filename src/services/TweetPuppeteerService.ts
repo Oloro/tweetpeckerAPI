@@ -37,6 +37,7 @@ export default abstract class TweetPuppeteerService {
       headless: true,
       defaultViewport: null,
       devtools: true,
+      args: ['--no-sandbox'],
     });
     logger.info('chrome launched.');
     const [page] = await browser.pages();
