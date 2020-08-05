@@ -48,6 +48,7 @@ export default abstract class TweetPuppeteerService {
     });
 
     client.on('Fetch.requestPaused', async (request) => {
+      logger.info(`twitter response = ${JSON.stringify(request)}`);
       const bodyString = atob(
         ((await client.send('Fetch.getResponseBody', {
           requestId: request.requestId,
