@@ -72,6 +72,7 @@ export default abstract class TweetPuppeteerService {
     browser.close();
 
     const requestHeaders = this.buildRequestHeaders(requests, extraInfo, count);
+    logger.info(`requestHeadersReady = ${JSON.stringify(requestHeaders)}`);
     let message: string;
     let posts: Post[];
     let users: User[];
@@ -155,7 +156,7 @@ export default abstract class TweetPuppeteerService {
         return /\./.test(value.networkId);
       })
       .pop();
-    logger.info(`correct requests - ${JSON.stringify(correctRequest)}`);
+    logger.info(`correct requests - ${JSON.stringify(correctRequest.body)}`);
     if (correctRequest.body.errors) {
       logger.info(
         `correct request has errors in body - returns false - ${JSON.stringify(
