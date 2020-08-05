@@ -37,6 +37,7 @@ export default abstract class TweetPuppeteerService {
       headless: true,
       defaultViewport: null,
       devtools: true,
+      executablePath: '/usr/bin/google-chrome',
       args: ['--no-sandbox'],
     });
     logger.info('chrome launched.');
