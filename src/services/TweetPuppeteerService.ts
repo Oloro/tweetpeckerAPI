@@ -156,19 +156,28 @@ export default abstract class TweetPuppeteerService {
       })
       .pop();
     logger.info(`correct requests - ${JSON.stringify(correctRequest)}`);
-    if (correctRequest.body.errors) return false;
+    if (correctRequest.body.errors) {
+      logger.info('correct request has errors in body - returns false');
+      return false;
+    }
     // - pick the extraInfo that is associated with correct request
     const requestExtraInfo = extraInfo
       .filter((value) => {
         return value.requestId === correctRequest.networkId;
       })
       .pop();
+    logger.info(
+      `requestExtraInfo associated - ${JSON.stringify(requestExtraInfo)}`
+    );
     // - pick the extraInfo with all the cookies that we need
     const requestExtraInfoCookies = extraInfo
       .filter((value) => {
         return value.headers.cookie !== undefined;
       })
       .pop();
+    logger.info(
+      `requestExtraInfoCookies - ${JSON.stringify(requestExtraInfoCookies)}`
+    );
     // - merge headers
     const requestHeaders: Record<string, string> = {
       ...correctRequest.headers,
