@@ -55,6 +55,7 @@ export default abstract class TweetPuppeteerService {
         })) as { body: string; base64Encoded: boolean }).body
       );
       try {
+        logger.info(`response body = ${bodyString}`);
         request.body = JSON.parse(bodyString);
       } catch (error) {
         request.body = {};
