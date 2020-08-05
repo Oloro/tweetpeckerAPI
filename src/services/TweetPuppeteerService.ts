@@ -197,6 +197,7 @@ export default abstract class TweetPuppeteerService {
         delete requestHeaders[key];
       }
     }
+    delete requestHeaders['accept-encoding'];
     // - replace the default count=20 for custom count
     requestHeaders.path = requestHeaders.path.replace(
       /&count=20&/,
