@@ -81,6 +81,7 @@ export default abstract class TweetPuppeteerService {
       // curl here
       const res = JSON.parse(await this.curlTwitter(requestHeaders));
       logger.info(JSON.stringify(res));
+      console.log(JSON.stringify(res));
       message = 'ok';
       posts = _values(res.globalObjects.tweets).map((v) => {
         return new Post(
