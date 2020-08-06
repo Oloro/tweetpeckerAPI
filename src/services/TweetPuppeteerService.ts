@@ -30,17 +30,13 @@ export default abstract class TweetPuppeteerService {
     count: number
   ): Promise<{ message: string; data: { posts: Post[]; users: User[] } }> {
     // these are Chrome DevTools Protocol objects, no reliable source of types data so "any"
-    logger.info('getTweetData called.');
     const requests: any[] = [];
     const extraInfo: any[] = [];
     const browser = await Puppeteer.launch({
       headless: true,
       defaultViewport: null,
       devtools: true,
-      executablePath: '/usr/bin/google-chrome',
-      args: ['--no-sandbox'],
     });
-    logger.info('chrome launched.');
     const [page] = await browser.pages();
     const client = await page.target().createCDPSession();
     await this.enableCDPDomains(client);
@@ -50,14 +46,12 @@ export default abstract class TweetPuppeteerService {
     });
 
     client.on('Fetch.requestPaused', async (request) => {
-      logger.info(`twitter response = ${JSON.stringify(request)}`);
       const bodyString = atob(
         ((await client.send('Fetch.getResponseBody', {
           requestId: request.requestId,
         })) as { body: string; base64Encoded: boolean }).body
       );
       try {
-        logger.info(`response body = ${bodyString}`);
         request.body = JSON.parse(bodyString);
       } catch (error) {
         request.body = {};
@@ -72,11 +66,9 @@ export default abstract class TweetPuppeteerService {
     await page.waitForRequest((req) => {
       return /init.json/.test(req.url());
     });
-    logger.info('init.json aquired, closing chrome.');
     browser.close();
 
     const requestHeaders = this.buildRequestHeaders(requests, extraInfo, count);
-    logger.info(`requestHeadersReady = ${JSON.stringify(requestHeaders)}`);
     let message: string;
     let posts: Post[];
     let users: User[];
@@ -160,14 +152,10 @@ export default abstract class TweetPuppeteerService {
         return /\./.test(value.networkId);
       })
       .pop();
-    logger.info(`correct requests - ${JSON.stringify(correctRequest.body)}`);
     if (correctRequest.body.errors) {
-      logger.info(
-        `correct request has errors in body - returns false - ${JSON.stringify(
-          correctRequest.body.errors
-        )}`
-      );
-      return false;
+      if (correctRequest.body.errors[0].code === 34) {
+        return false;
+      }
     }
     // - pick the extraInfo that is associated with correct request
     const requestExtraInfo = extraInfo
@@ -175,18 +163,12 @@ export default abstract class TweetPuppeteerService {
         return value.requestId === correctRequest.networkId;
       })
       .pop();
-    logger.info(
-      `requestExtraInfo associated - ${JSON.stringify(requestExtraInfo)}`
-    );
     // - pick the extraInfo with all the cookies that we need
     const requestExtraInfoCookies = extraInfo
       .filter((value) => {
         return value.headers.cookie !== undefined;
       })
       .pop();
-    logger.info(
-      `requestExtraInfoCookies - ${JSON.stringify(requestExtraInfoCookies)}`
-    );
     // - merge headers
     const requestHeaders: Record<string, string> = {
       ...correctRequest.headers,
