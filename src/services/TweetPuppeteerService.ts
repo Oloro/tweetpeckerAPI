@@ -78,7 +78,7 @@ export default abstract class TweetPuppeteerService {
       users = [];
     } else {
       const bentRequest = Bent('https://api.twitter.com', 'string');
-      logger.info(`${requestHeaders}`);
+      logger.info(`${JSON.stringify(requestHeaders)}`);
       const res = JSON.parse(
         await bentRequest(requestHeaders.path, undefined, requestHeaders)
       );
