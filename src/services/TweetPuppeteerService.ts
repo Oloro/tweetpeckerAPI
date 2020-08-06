@@ -4,8 +4,9 @@ import Post from '../models/Post';
 import User from '../models/User';
 import _values from 'lodash.values';
 import atob from 'atob';
-import { createLogger, format, transports } from 'winston';
+import { createLogger, format } from 'winston';
 import dailyRotateFile from 'winston-daily-rotate-file';
+import curl from 'curlrequest';
 
 const logger = createLogger({
   level: 'info',
@@ -77,11 +78,8 @@ export default abstract class TweetPuppeteerService {
       posts = [];
       users = [];
     } else {
-      const bentRequest = Bent('https://api.twitter.com', 'string');
-      logger.info(`${JSON.stringify(requestHeaders)}`);
-      const res = JSON.parse(
-        await bentRequest(requestHeaders.path, undefined, requestHeaders)
-      );
+      // curl here
+      const res = JSON.parse(await this.curlTwitter(requestHeaders));
       message = 'ok';
       posts = _values(res.globalObjects.tweets).map((v) => {
         return new Post(
@@ -191,5 +189,21 @@ export default abstract class TweetPuppeteerService {
       `&count=${repliesCount}&`
     );
     return requestHeaders;
+  }
+
+  private static async curlTwitter(
+    requestHeaders: Record<string, string>
+  ): Promise<string> {
+    return new Promise((resolve, reject) => {
+      curl.request(
+        {
+          url: `https://api.twitter.com${requestHeaders.path}`,
+          headers: requestHeaders,
+        },
+        (err: any, stdout: any) => {
+          resolve(stdout);
+        }
+      );
+    });
   }
 }
