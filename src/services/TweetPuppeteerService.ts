@@ -201,7 +201,7 @@ export default abstract class TweetPuppeteerService {
       for (const [key, value] of Object.entries(requestHeaders)) {
         curlString += `--header '${key}: ${value}' `;
       }
-      curlString += "--header 'x-guest-token: 1292920382345940992'";
+      curlString += "--header 'x-guest-token: 1292920382345940992' ";
       curlString += `--cookie '${requestHeaders.cookie}'`;
       console.log(curlString);
       exec(curlString, (error, stdout, stderr) => resolve(stdout));
