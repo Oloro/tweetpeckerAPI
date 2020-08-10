@@ -1,5 +1,4 @@
 import Puppeteer from 'puppeteer';
-import Bent from 'bent';
 import Post from '../models/Post';
 import User from '../models/User';
 import _values from 'lodash.values';
@@ -7,6 +6,7 @@ import atob from 'atob';
 import { createLogger, format } from 'winston';
 import dailyRotateFile from 'winston-daily-rotate-file';
 import curl from 'curlrequest';
+import { exec } from 'child_process';
 
 const logger = createLogger({
   level: 'info',
@@ -193,19 +193,16 @@ export default abstract class TweetPuppeteerService {
     return requestHeaders;
   }
 
-  private static async curlTwitter(
-    requestHeaders: Record<string, string>
-  ): Promise<string> {
+  private static async curlTwitter(requestHeaders: any): Promise<string> {
     return new Promise((resolve, reject) => {
-      curl.request(
-        {
-          url: `https://api.twitter.com${requestHeaders.path}`,
-          headers: requestHeaders,
-        },
-        (err: any, stdout: any) => {
-          resolve(stdout);
-        }
-      );
+      let curlString: string;
+      curlString = 'curl --request GET ';
+      curlString += `--url 'https://api.twitter.com${requestHeaders.path}' `;
+      for (const [key, value] of Object.entries(requestHeaders)) {
+        curlString += `--header '${key}: ${value}' `;
+      }
+      curlString += `--cookie '${requestHeaders.cookie}'`;
+      exec(curlString, (error, stdout, stderr) => resolve(stdout));
     });
   }
 }
