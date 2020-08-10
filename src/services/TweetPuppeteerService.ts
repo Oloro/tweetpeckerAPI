@@ -67,7 +67,6 @@ export default abstract class TweetPuppeteerService {
     await page.waitForRequest((req) => {
       return /init.json/.test(req.url());
     });
-    page.screenshot();
     browser.close();
 
     const requestHeaders = this.buildRequestHeaders(requests, extraInfo, count);
