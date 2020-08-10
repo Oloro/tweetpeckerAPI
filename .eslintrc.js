@@ -13,6 +13,6 @@ module.exports = {
   },
   rules: {
     'prettier/prettier': ['error', { singleQuote: true, endOfLine: 'auto' }],
-    quotes: ['error', 'single'],
+    //quotes: ['error', 'single'],
   },
 };
