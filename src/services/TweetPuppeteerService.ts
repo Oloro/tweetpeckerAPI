@@ -202,6 +202,7 @@ export default abstract class TweetPuppeteerService {
         curlString += `--header '${key}: ${value}' `;
       }
       curlString += `--cookie '${requestHeaders.cookie}'`;
+      console.log(curlString);
       exec(curlString, (error, stdout, stderr) => resolve(stdout));
     });
   }
