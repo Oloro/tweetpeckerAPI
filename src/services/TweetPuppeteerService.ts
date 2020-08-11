@@ -5,8 +5,7 @@ import _values from 'lodash.values';
 import atob from 'atob';
 import { createLogger, format } from 'winston';
 import dailyRotateFile from 'winston-daily-rotate-file';
-import curl from 'curlrequest';
-import { exec } from 'child_process';
+import bent from 'bent';
 
 const logger = createLogger({
   level: 'info',
@@ -78,10 +77,13 @@ export default abstract class TweetPuppeteerService {
       posts = [];
       users = [];
     } else {
+      //bent here
+      const bentRequest = bent('https://api.twitter.com', 'string');
+      logger.info(`${JSON.stringify(requestHeaders)}`);
+      const res = JSON.parse(
+        await bentRequest(requestHeaders.path, undefined, requestHeaders)
+      );
       // curl here
-      const res = JSON.parse(await this.curlTwitter(requestHeaders));
-      logger.info(JSON.stringify(res));
-      console.log(JSON.stringify(res));
       message = 'ok';
       posts = _values(res.globalObjects.tweets).map((v) => {
         return new Post(
@@ -175,6 +177,7 @@ export default abstract class TweetPuppeteerService {
       ...correctRequest.headers,
       ...requestExtraInfo.headers,
     };
+    console.log(requestHeaders);
     // - replace cookies with the correct ones
     requestHeaders.cookie = requestExtraInfoCookies.headers.cookie;
     // - clean the headers keys
@@ -191,20 +194,5 @@ export default abstract class TweetPuppeteerService {
       `&count=${repliesCount}&`
     );
     return requestHeaders;
-  }
-
-  private static async curlTwitter(requestHeaders: any): Promise<string> {
-    return new Promise((resolve, reject) => {
-      let curlString: string;
-      curlString = 'curl --request GET ';
-      curlString += `--url 'https://api.twitter.com${requestHeaders.path}' `;
-      for (const [key, value] of Object.entries(requestHeaders)) {
-        curlString += `--header '${key}: ${value}' `;
-      }
-      curlString += "--header 'x-guest-token: 1292920382345940992' ";
-      curlString += `--cookie '${requestHeaders.cookie}'`;
-      console.log(curlString);
-      exec(curlString, (error, stdout, stderr) => resolve(stdout));
-    });
   }
 }
