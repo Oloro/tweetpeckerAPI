@@ -188,6 +188,7 @@ export default abstract class TweetPuppeteerService {
       }
     }
     delete requestHeaders['accept-encoding'];
+    requestHeaders['x-guest-token'] = '1293443236179083265';
     // - replace the default count=20 for custom count
     requestHeaders.path = requestHeaders.path.replace(
       /&count=20&/,
